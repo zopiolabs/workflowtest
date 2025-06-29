@@ -1,6 +1,6 @@
 {
   "name": "zopio",
-  "version": "0.0.15",
+  "version": "0.0.16",
   "description": "This package name is reserved for the zopio",
   "main": "index.js",
   "private": true
