@@ -14,6 +14,11 @@ on:
       # Only trigger on pushes to the main branch
       - main
 
+# Add permissions needed for PR creation
+permissions:
+  contents: write
+  pull-requests: write
+
 jobs:
   backmerge:
     runs-on: ubuntu-latest
@@ -27,10 +32,26 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      # Step 1.5: Ensure we have the latest develop branch and check if there are differences
+      - name: Fetch develop branch
+        run: git fetch origin develop:develop
+
+      - name: Check for differences between main and develop
+        id: check_diff
+        run: |
+          git diff --quiet main develop || echo "has_diff=true" >> $GITHUB_OUTPUT
+          echo "Checking differences between main and develop branches..."
+          if git diff --quiet main develop; then
+            echo "No differences found between main and develop branches."
+          else
+            echo "Found differences between main and develop branches."
+          fi
+
       # Step 2: Create an automated pull request for the backmerge
       # Uses the peter-evans/create-pull-request action to generate a PR
       - name: Create Backmerge PR
         uses: peter-evans/create-pull-request@v5
+        if: steps.check_diff.outputs.has_diff == 'true'
         with:
           # Use the default GitHub token for authentication
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -51,3 +72,12 @@ jobs:
           commit-message: "chore(backmerge): sync main into develop after version bump"
           # Clean up by deleting the temporary branch after the PR is merged or closed
           delete-branch: true
+          
+      - name: PR Creation Status
+        if: always()
+        run: |
+          if [ "${{ steps.check_diff.outputs.has_diff }}" != 'true' ]; then
+            echo "No PR created because there are no differences between main and develop branches."
+          else
+            echo "PR creation attempted. If no PR was created, check GitHub token permissions."
+          fi
