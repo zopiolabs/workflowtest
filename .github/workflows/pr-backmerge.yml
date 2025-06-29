@@ -66,7 +66,7 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           base: develop
-          branch: auto/backmerge-main-to-develop
+          branch: auto/backmerge-main-to-develop-${{ github.run_number }}
           title: "🔁 Backmerge: main → develop (after version bump)"
           body: |
             ## Automated Backmerge PR
