@@ -31,20 +31,27 @@ jobs:
       # This gives the workflow access to the repository contents
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Fetch all history for proper branch comparison
 
       # Step 1.5: Ensure we have the latest develop branch and check if there are differences
       - name: Fetch develop branch
-        run: git fetch origin develop:develop
+        run: |
+          git fetch origin develop:develop
+          git branch -a
+          echo "Current branch: $(git branch --show-current)"
+          echo "Develop branch commit: $(git rev-parse develop)"
+          echo "Main branch commit: $(git rev-parse main)"
 
       - name: Check for differences between main and develop
         id: check_diff
         run: |
-          git diff --quiet main develop || echo "has_diff=true" >> $GITHUB_OUTPUT
-          echo "Checking differences between main and develop branches..."
           if git diff --quiet main develop; then
             echo "No differences found between main and develop branches."
+            echo "has_diff=false" >> $GITHUB_OUTPUT
           else
             echo "Found differences between main and develop branches."
+            echo "has_diff=true" >> $GITHUB_OUTPUT
           fi
 
       # Step 2: Create an automated pull request for the backmerge
@@ -76,8 +83,10 @@ jobs:
       - name: PR Creation Status
         if: always()
         run: |
+          echo "has_diff value: ${{ steps.check_diff.outputs.has_diff }}"
           if [ "${{ steps.check_diff.outputs.has_diff }}" != 'true' ]; then
             echo "No PR created because there are no differences between main and develop branches."
           else
             echo "PR creation attempted. If no PR was created, check GitHub token permissions."
+            echo "GitHub token permissions: ${{ toJson(github.token_permissions) }}"
           fi
