@@ -64,7 +64,7 @@ jobs:
         uses: peter-evans/create-pull-request@v5
         if: steps.check_diff.outputs.has_diff == 'true'
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.GH_PAT }}
           base: develop
           branch: auto/backmerge-main-to-develop-${{ github.run_number }}
           title: "🔁 Backmerge: main → develop (after version bump)"
